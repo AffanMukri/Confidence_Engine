@@ -7,13 +7,20 @@ Override any value via environment variables for deployment flexibility.
 
 import os
 from pathlib import Path
+import tempfile
 from typing import Dict
 
 
 # ---------------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------------
-_DEFAULT_DB_PATH = Path(__file__).resolve().parent / "confidence.db"
+# Vercel Functions have a read-only application filesystem. Their writable
+# scratch space is /tmp; local development keeps the database beside the app.
+_DEFAULT_DB_PATH = (
+    Path(tempfile.gettempdir()) / "confidence.db"
+    if os.getenv("VERCEL")
+    else Path(__file__).resolve().parent / "confidence.db"
+)
 _DEFAULT_DATABASE_URL = f"sqlite+aiosqlite:///{_DEFAULT_DB_PATH.as_posix()}"
 
 # SQLite makes the application work out of the box. Production deployments can

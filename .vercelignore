@@ -1,0 +1,7 @@
+backend/tests/
+testsprite_tests/
+**/__pycache__/
+**/.pytest_cache/
+**/*.pyc
+**/*.db
+start.bat

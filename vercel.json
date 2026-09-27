@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "backend/main.py": {
+      "excludeFiles": "{backend/tests/**,testsprite_tests/**,**/__pycache__/**,**/*.pyc,**/*.db,start.bat}"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/backend/main.py"
+    }
+  ]
+}
