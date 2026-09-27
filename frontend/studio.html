@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Confidence Engine live analysis studio.">
+    <title>Live Studio — Confidence Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=20260927-6">
+</head>
+<body class="studio-page">
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+
+    <div class="site-shell">
+        <header class="site-header">
+            <a class="brand" href="index.html" aria-label="Back to Confidence Engine home">
+                <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+                <span>confidence.engine</span>
+            </a>
+            <nav class="site-nav" aria-label="Studio navigation">
+                <a href="index.html">Overview</a>
+                <a href="index.html#method">How it works</a>
+            </nav>
+            <a class="nav-cta" href="index.html"><span aria-hidden="true">←</span> Back home</a>
+        </header>
+
+        <main class="studio-main">
+            <section class="studio-section" id="workspace" aria-labelledby="studio-title">
+                <div class="section-heading">
+                    <div>
+                        <span class="section-kicker">Your private practice room</span>
+                        <h1 id="studio-title">Live confidence studio</h1>
+                        <p>Position yourself naturally, start a session, and let the signals settle for a moment.</p>
+                    </div>
+                    <div class="status-indicator" aria-live="polite"><span class="status-dot" id="statusDot"></span><span id="statusText">Ready to begin</span></div>
+                </div>
+
+                <div class="dashboard">
+                    <div class="video-section studio-card">
+                        <div class="card-topbar"><div><span class="card-dot"></span>Camera preview</div><span class="privacy-chip">Local session</span></div>
+                        <div class="video-container" id="videoContainer">
+                            <video id="videoElement" autoplay playsinline muted></video>
+                            <canvas id="captureCanvas" style="display: none;"></canvas>
+                            <div class="camera-corners" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+                            <div id="fallbackUI" class="fallback-ui" style="display: none;">
+                                <span class="camera-icon" aria-hidden="true">◉</span><h3>Camera access needed</h3><p>Allow camera access to begin your live analysis.</p>
+                                <button id="retryBtn" class="btn secondary">Grant camera access</button>
+                            </div>
+                        </div>
+                        <div class="controls">
+                            <button id="startBtn" class="btn primary"><span class="btn-icon" aria-hidden="true">▶</span>Start analysis</button>
+                            <button id="endBtn" class="btn secondary" disabled><span class="stop-icon" aria-hidden="true"></span>End session</button>
+                        </div>
+                        <p class="camera-note"><span>●</span>Your camera stream is processed for live feedback and is never recorded.</p>
+                    </div>
+
+                    <div class="analysis-section">
+                        <div class="gauge-card studio-card">
+                            <div class="card-heading-row"><div><span class="card-eyebrow">Live index</span><h3>Composite score</h3></div><span class="score-scale">/ 100</span></div>
+                            <div class="gauge-container">
+                                <svg class="gauge-svg" viewBox="0 0 120 120" aria-hidden="true">
+                                    <path class="gauge-bg" d="M 20 100 A 50 50 0 1 1 100 100" fill="none" stroke-width="10" stroke-linecap="round"/>
+                                    <path class="gauge-value" id="gaugeArc" d="M 20 100 A 50 50 0 1 1 100 100" fill="none" stroke-width="10" stroke-linecap="round"/>
+                                </svg>
+                                <div class="gauge-text"><span id="scoreValue">--</span><small>Overall</small></div>
+                            </div>
+                            <div class="score-legend"><span>Developing</span><span>Balanced</span><span>Strong</span></div>
+                        </div>
+
+                        <div class="signals-card studio-card">
+                            <div class="card-heading-row"><div><span class="card-eyebrow">Signal matrix</span><h3>Real-time cues</h3></div><span class="signal-count">09 signals</span></div>
+                            <div class="signals-list" id="signalsList"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="site-footer">
+            <a class="brand footer-brand" href="index.html"><span class="brand-mark"><span></span><span></span><span></span></span><span>confidence.engine</span></a>
+            <p>Own the room before you enter it.</p><span>Private local analysis</span>
+        </footer>
+    </div>
+
+    <div id="summaryPanel" class="summary-panel" style="display: none;">
+        <div class="summary-header"><div><span class="section-kicker">Performance report</span><h2>Session complete</h2><span class="summary-session-id" id="summarySessionId"></span></div><span class="summary-badge">Analysed</span></div>
+        <div class="overall-score-section" id="overallScoreSection">
+            <div class="overall-score-ring" id="overallScoreRing">
+                <svg viewBox="0 0 140 140" class="overall-score-svg"><circle class="overall-score-bg" cx="70" cy="70" r="60" fill="none" stroke-width="10"/><circle class="overall-score-fill" id="overallScoreArc" cx="70" cy="70" r="60" fill="none" stroke-width="10" stroke-linecap="round" stroke-dasharray="377" stroke-dashoffset="377" transform="rotate(-90 70 70)"/></svg>
+                <div class="overall-score-text"><span class="overall-score-value" id="overallScoreValue">--</span><span class="overall-score-label">out of 10</span></div>
+            </div>
+            <div class="overall-score-caption"><h3>Overall confidence score</h3><p id="overallScoreDescription">Combined visual analysis</p></div>
+        </div>
+        <div class="summary-stats">
+            <div class="stat-box"><span class="stat-icon">◷</span><span class="stat-value" id="summaryDuration">--</span><span class="stat-label">Duration</span></div>
+            <div class="stat-box"><span class="stat-icon">◎</span><span class="stat-value" id="summaryAvg">--</span><span class="stat-label">Average</span></div>
+            <div class="stat-box"><span class="stat-icon">▦</span><span class="stat-value" id="summaryFrames">--</span><span class="stat-label">Frames</span></div>
+            <div class="stat-box"><span class="stat-icon">↗</span><span class="stat-value" id="summaryRange">--</span><span class="stat-label">Range</span></div>
+        </div>
+        <div class="timeline-section"><h3>Score timeline</h3><div class="timeline-chart" id="timelineChart"></div></div>
+        <div class="signals-breakdown"><h3>Per-signal breakdown</h3><div class="breakdown-table" id="breakdownTable"><div class="breakdown-header"><span class="col-signal">Signal</span><span class="col-avg">Avg</span><span class="col-min">Min</span><span class="col-max">Max</span></div><div class="breakdown-body" id="breakdownBody"></div></div></div>
+        <div id="lowConfidenceSection" class="low-confidence-section" style="display: none;"><h3>Low-confidence periods</h3><div id="lowConfidenceFlags" class="flags-list"></div></div>
+        <div class="summary-actions"><button id="closeSummaryBtn" class="btn primary">Close report</button><span class="summary-note">Session data saved locally and available through the sessions API.</span></div>
+    </div>
+
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+    <script src="app.js?v=20260927-4"></script>
+</body>
+</html>

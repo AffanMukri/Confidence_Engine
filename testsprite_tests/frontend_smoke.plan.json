@@ -1,0 +1,33 @@
+{
+  "projectId": "fcc9ba9e-c19a-4bb5-8b01-92ac934dc7a6",
+  "type": "frontend",
+  "name": "Landing page renders confidence dashboard",
+  "description": "Verify the Confidence Engine landing page loads and shows the main dashboard elements before a session starts.",
+  "priority": "p1",
+  "planSteps": [
+    {
+      "type": "action",
+      "description": "Open the app at / and wait for the page to load"
+    },
+    {
+      "type": "assertion",
+      "description": "Assert that the heading 'Confidence Engine' is visible"
+    },
+    {
+      "type": "assertion",
+      "description": "Assert that the 'Start Session' button exists and is enabled"
+    },
+    {
+      "type": "assertion",
+      "description": "Assert that the 'End Session' button exists and is disabled"
+    },
+    {
+      "type": "assertion",
+      "description": "Assert that the 'Composite Score' gauge shows '--' before a session starts"
+    },
+    {
+      "type": "assertion",
+      "description": "Assert that the 'Real-Time Signals' panel lists signal rows for eye contact, blink rate, brow tension, smile, hand stability, fidgeting, hand openness, shoulder alignment, and posture"
+    }
+  ]
+}
