@@ -1,9 +1,11 @@
 [build]
+  base = "."
   command = "npm run build"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "20"
+  VITE_API_URL = "https://confidence-engine-i3h9.onrender.com"
 
 [[headers]]
   for = "/runtime-config.js"
