@@ -9,7 +9,6 @@ during development.
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -30,8 +29,7 @@ class Base(DeclarativeBase):
 
 
 def _sqlite_fallback_url() -> str:
-    db_path = Path(__file__).resolve().parent / "confidence.db"
-    return f"sqlite+aiosqlite:///{db_path.as_posix()}"
+    return config.SQLITE_FALLBACK_URL
 
 
 def _make_engine(url: str):

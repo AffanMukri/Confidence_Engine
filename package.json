@@ -1,0 +1,9 @@
+{
+  "name": "confidence-engine-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build-frontend.mjs",
+    "test:frontend-config": "node scripts/test-frontend-config.mjs"
+  }
+}

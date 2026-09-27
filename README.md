@@ -30,7 +30,81 @@ Open `http://localhost:8765` in Chrome/Edge. Click **Start Session**, grant came
 
 On Windows, you can also double-click `start.bat` in the project folder, keep the opened server window running, and then visit `http://localhost:8765`.
 
-If the frontend is hosted separately, set `window.CONFIDENCE_ENGINE_WS_URL` before loading `app.js` (for example, `wss://engine.example.com`).
+For a separate frontend deployment, build the frontend with `VITE_API_URL`
+set to the backend's public HTTP origin. The browser automatically converts an
+`https://` API origin to `wss://` for the live confidence stream.
+
+```bash
+# Local static frontend build
+VITE_API_URL=http://localhost:8765 npm run build
+```
+
+## Production deployment
+
+The production application has two deployment units:
+
+- **Netlify:** static HTML, CSS, and JavaScript from `dist/`
+- **Render (or another WebSocket-capable Python host):** FastAPI, MediaPipe,
+  REST endpoints, WebSocket analysis, and persistence
+
+Netlify cannot run this Python/MediaPipe backend. The frontend therefore talks
+directly to one configured HTTPS backend origin; it never derives a backend
+port from the Netlify hostname.
+
+### Backend on Render
+
+The included `render.yaml` configures a Render Web Service. For manual setup,
+use these exact settings:
+
+```text
+Root directory: backend
+Build command:  pip install -r requirements.txt
+Start command:  uvicorn main:app --host 0.0.0.0 --port $PORT
+Health check:   /health
+Python:         3.12
+```
+
+Backend environment variables:
+
+```dotenv
+ALLOWED_ORIGINS=https://confidence-engine.netlify.app,http://localhost:8765,http://127.0.0.1:8765
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE
+MP_DELEGATE=CPU
+```
+
+`PORT` is supplied by Render and read by the app. `DATABASE_URL` is strongly
+recommended for persistent production sessions; without it, SQLite uses the
+host's temporary filesystem and data can disappear after a restart or deploy.
+Standard hosted `postgres://` and `postgresql://` values are automatically
+converted to SQLAlchemy's async `postgresql+asyncpg://` form.
+
+After the backend deploys, confirm that
+`https://YOUR-BACKEND.onrender.com/health` returns:
+
+```json
+{"status":"ok","service":"confidence-engine"}
+```
+
+### Frontend on Netlify
+
+The committed `netlify.toml` supplies the build and publish settings:
+
+```text
+Base directory:      (blank / repository root)
+Build command:       npm run build
+Publish directory:   dist
+Functions directory: (blank)
+```
+
+Add this Netlify environment variable for every deploy context:
+
+```dotenv
+VITE_API_URL=https://YOUR-BACKEND.onrender.com
+```
+
+Do not include `/health`, `/api`, `/ws`, or a trailing port. Netlify builds are
+rejected if this value is missing or does not use HTTPS. Trigger a new deploy
+after changing it.
 
 ---
 
@@ -142,7 +216,9 @@ WEIGHTS = {
 
 ## API Reference
 
-### WebSocket: `ws://localhost:8765/ws/confidence/{session_id}`
+### WebSocket: `ws://localhost:8765/ws/confidence/{session_id}` (local)
+
+Production uses `wss://YOUR-BACKEND/ws/confidence/{session_id}`.
 
 **Client → Server**: Binary JPEG frame (every 100ms)
 
@@ -201,7 +277,7 @@ WEIGHTS = {
 Point any frontend at this engine's WebSocket:
 
 ```javascript
-const ws = new WebSocket(`ws://engine-host:8765/ws/confidence/${yourSessionId}`);
+const ws = new WebSocket(`wss://engine.example.com/ws/confidence/${yourSessionId}`);
 // Send JPEG frames, receive score_update messages
 ```
 

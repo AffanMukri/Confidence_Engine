@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: confidence-engine-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python start.py
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: ALLOWED_ORIGINS
+        value: https://confidence-engine.netlify.app,http://localhost:8765,http://127.0.0.1:8765
+      - key: MP_DELEGATE
+        value: CPU

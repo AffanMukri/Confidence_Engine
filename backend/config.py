@@ -6,8 +6,8 @@ Override any value via environment variables for deployment flexibility.
 """
 
 import os
-from pathlib import Path
 import tempfile
+from pathlib import Path
 from typing import Dict
 
 
@@ -16,16 +16,31 @@ from typing import Dict
 # ---------------------------------------------------------------------------
 # Vercel Functions have a read-only application filesystem. Their writable
 # scratch space is /tmp; local development keeps the database beside the app.
+_IS_EPHEMERAL_RUNTIME = any(
+    os.getenv(name)
+    for name in ("VERCEL", "RENDER", "RAILWAY_ENVIRONMENT", "DYNO")
+)
 _DEFAULT_DB_PATH = (
     Path(tempfile.gettempdir()) / "confidence.db"
-    if os.getenv("VERCEL")
+    if _IS_EPHEMERAL_RUNTIME
     else Path(__file__).resolve().parent / "confidence.db"
 )
 _DEFAULT_DATABASE_URL = f"sqlite+aiosqlite:///{_DEFAULT_DB_PATH.as_posix()}"
 
+
+def _async_database_url(value: str) -> str:
+    """Convert common hosted Postgres URLs to SQLAlchemy's async driver."""
+    if value.startswith("postgres://"):
+        return "postgresql+asyncpg://" + value.removeprefix("postgres://")
+    if value.startswith("postgresql://"):
+        return "postgresql+asyncpg://" + value.removeprefix("postgresql://")
+    return value
+
 # SQLite makes the application work out of the box. Production deployments can
 # opt into PostgreSQL by setting DATABASE_URL explicitly.
-DATABASE_URL: str = os.getenv("DATABASE_URL", _DEFAULT_DATABASE_URL)
+DATABASE_URL: str = _async_database_url(
+    os.getenv("DATABASE_URL", _DEFAULT_DATABASE_URL)
+)
 
 # Synchronous URL variant (used by tests / Alembic if added later)
 DATABASE_URL_SYNC: str = os.getenv(
@@ -34,20 +49,31 @@ DATABASE_URL_SYNC: str = os.getenv(
 )
 
 # Local SQLite fallback when PostgreSQL is unavailable (dev convenience).
-SQLITE_FALLBACK_URL: str = os.getenv("SQLITE_FALLBACK_URL", "")
+SQLITE_FALLBACK_URL: str = os.getenv(
+    "SQLITE_FALLBACK_URL", _DEFAULT_DATABASE_URL
+)
 
 # ---------------------------------------------------------------------------
 # CORS
 # ---------------------------------------------------------------------------
+_DEFAULT_ALLOWED_ORIGINS = (
+    "https://confidence-engine.netlify.app,"
+    "http://localhost:8765,http://127.0.0.1:8765,"
+    "http://localhost:5173,http://127.0.0.1:5173"
+)
 ALLOWED_ORIGINS: list[str] = [
-    origin.strip()
-    for origin in os.getenv("ALLOWED_ORIGINS", "*").split(",")
+    origin.strip().rstrip("/")
+    for origin in os.getenv(
+        "ALLOWED_ORIGINS", _DEFAULT_ALLOWED_ORIGINS
+    ).split(",")
+    if origin.strip()
 ]
+CORS_ALLOW_CREDENTIALS: bool = "*" not in ALLOWED_ORIGINS
 
 # ---------------------------------------------------------------------------
 # Server
 # ---------------------------------------------------------------------------
-HOST: str = os.getenv("HOST", "127.0.0.1")
+HOST: str = os.getenv("HOST", "0.0.0.0")
 PORT: int = int(os.getenv("PORT", "8765"))
 
 # ---------------------------------------------------------------------------

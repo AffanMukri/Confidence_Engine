@@ -8,7 +8,7 @@ Start with::
 Or programmatically::
 
     import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8765, reload=True)
+    uvicorn.run("main:app", host=config.HOST, port=config.PORT)
 """
 
 from __future__ import annotations
@@ -77,13 +77,13 @@ app = FastAPI(
 )
 
 # ---- CORS ----
-# Permissive for dev (file:// and localhost origins).
-# Tighten ALLOWED_ORIGINS via env var for production:
-#   ALLOWED_ORIGINS=https://uhired.in,https://app.uhired.in
+# The Netlify production origin and common local development origins are
+# allowed by default. Override the comma-separated ALLOWED_ORIGINS setting
+# when using a different frontend domain.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=config.ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=config.CORS_ALLOW_CREDENTIALS,
     allow_methods=["*"],
     allow_headers=["*"],
 )

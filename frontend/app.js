@@ -8,18 +8,37 @@ const signals = [
     'hand_openness', 'shoulder_alignment', 'posture'
 ];
 
-const WS_PROTOCOL = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-let wsBase = null;
+const DEFAULT_API_URL = 'http://localhost:8765';
+const BACKEND_HEALTH_TIMEOUT_MS = 30000;
+let apiBase = null;
 
-function websocketToHttp(base) {
-    return base.replace(/^wss:/, 'https:').replace(/^ws:/, 'http:');
+function normalizeApiBase(value) {
+    const url = new URL(value);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+        throw new Error('Backend URL must start with http:// or https://');
+    }
+    if (window.location.protocol === 'https:' && url.protocol !== 'https:') {
+        throw new Error('The production backend URL must use HTTPS.');
+    }
+    return url.toString().replace(/\/$/, '');
+}
+
+function getConfiguredApiBase() {
+    const runtimeConfig = window.__CONFIDENCE_ENGINE_CONFIG__ || {};
+    return normalizeApiBase(runtimeConfig.API_URL || DEFAULT_API_URL);
+}
+
+function apiToWebSocket(base) {
+    return base.replace(/^https:/, 'wss:').replace(/^http:/, 'ws:');
 }
 
 async function isConfidenceBackend(base) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 2000);
+    // Web services on entry-level hosting can need time to wake from an idle
+    // state. Keep this long enough for a cold start, but still fail clearly.
+    const timeout = setTimeout(() => controller.abort(), BACKEND_HEALTH_TIMEOUT_MS);
     try {
-        const response = await fetch(`${websocketToHttp(base)}/health`, {
+        const response = await fetch(`${base}/health`, {
             cache: 'no-store',
             signal: controller.signal
         });
@@ -33,31 +52,10 @@ async function isConfidenceBackend(base) {
     }
 }
 
-async function resolveWebSocketBase() {
-    if (window.CONFIDENCE_ENGINE_WS_URL) {
-        const configured = window.CONFIDENCE_ENGINE_WS_URL.replace(/\/$/, '');
-        if (await isConfidenceBackend(configured)) return configured;
-        throw new Error(`Configured backend is unavailable at ${configured}`);
-    }
-
-    const hostname = window.location.hostname || 'localhost';
-    const candidates = [];
-    const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
-    if (isLocalHost) {
-        candidates.push(`${WS_PROTOCOL}//${hostname}:8765`);
-    }
-    if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
-        candidates.push(`${WS_PROTOCOL}//${window.location.host}`);
-    }
-    if (!isLocalHost) {
-        candidates.push(`${WS_PROTOCOL}//${hostname}:8765`);
-    }
-
-    for (const candidate of [...new Set(candidates)]) {
-        if (await isConfidenceBackend(candidate)) return candidate;
-    }
-
-    throw new Error(`Start the backend on http://${hostname}:8765 and try again`);
+async function resolveApiBase() {
+    const configured = getConfiguredApiBase();
+    if (await isConfidenceBackend(configured)) return configured;
+    throw new Error(`Configured backend is unavailable at ${configured}`);
 }
 
 // Elements
@@ -298,7 +296,7 @@ function stopCapture() {
 function connectWebSocket() {
     if (!isSessionActive) return;
 
-    const wsUrl = `${wsBase}/ws/confidence/${sessionId}`;
+    const wsUrl = `${apiToWebSocket(apiBase)}/ws/confidence/${sessionId}`;
     const socket = new WebSocket(wsUrl);
     ws = socket;
 
@@ -400,7 +398,7 @@ async function startSession() {
     statusText.textContent = 'Checking backend…';
 
     try {
-        wsBase = await resolveWebSocketBase();
+        apiBase = await resolveApiBase();
     } catch (error) {
         console.error('Backend discovery failed:', error);
         statusText.textContent = 'Backend unavailable';
